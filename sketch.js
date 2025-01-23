@@ -80,7 +80,7 @@ function setup() {
 
 	camera = new Camera([0,0],1);
 	sun = new Body("sun", 1.9885e30, 1.3914e9, 0, 0, 'yellow');
-	earth = new Body("earth", 5.972e24, 1.3914e9, 1.496e11, 0, 'blue');
+	earth = new Body("earth", 5.972e24, 1.275627e7, 1.496e11, 0, 'blue');
 	moon = new Body("moon", 7.35e10^22, 3.5e6, 1.496e11, -8.8417e7, 'grey');
 }//1.275627e7
 
