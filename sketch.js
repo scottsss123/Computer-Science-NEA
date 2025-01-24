@@ -1,12 +1,27 @@
-// x / 1.3914e9 maps diameter of sun to diameter of x pixels
-const sf = 100 / 1.3914e9
-let camSpeed = 1.496e11 / 300;
+// scale factor from real diameter of sun to 100 pixels
+const sf = 100 / 1.3914e9 
+// camera speed ~speed of light when camera isn't zoomed
+let camSpeed = 3e8;
 let camVel = [0,0];
+
 let screenWidth = 0;
 let screenHeight = 0;
 
+// TODO: 
+// ideal zoom attribute for when panning straight to body it fits frame nicely
+//
+// IDEAS: 
+// controllable rocket or spaceship, 'player', starts in low earth orbit
+// can accelerate in any direction, showing predicted path line, initially circular around earth
+// player is affected by gravity of all bodies which all start in orbit around the sun with their own predicted path line
+// ? planets only affected by the most significant force, moon only considers forces from earth which only considers forces from sun
+// bodies and player have mass (scalar)(kg), velocity(arr length 2)(x,y)(m/s), forces(acting on them)(arr length 2)(x,y or i,j)(N)
+// can calculate acceleration due to resultant force on body
+// can calculate magnitude force on body due to gravity (classical) using formula, F = G(m1m2)/r^2
+// can calculate angle of force on body with trig then update force acting on body accordingly
+// ? toggle realistic & educational scale, default realistic, educational greatly increases size of planets
 
-class Body { // TODO: ideal zoom attribute for when panning straight to body it fits frame nicely
+class Body { 
 	#name;
 	#mass; //kg
 	#diameter; //m
@@ -76,6 +91,9 @@ class Camera {
 	getZoom() {
 		return this.#zoom;
 	}
+	setZoom(zoom) {
+		this.#zoom = zoom;
+	}
 	getPos() {
 		return this.#pos;
 	}
@@ -106,7 +124,8 @@ function setup() {
 	camera = new Camera([0,0],1);
 	
 	bodies.push(new Body("sun", 1.9885e30, 1.3914e9, 0, 0, 'yellow'));
-	bodies.push(new Body("mercury", 3.3011e23, 4.88e6, 5.791e10, 0, 'grey'))
+	bodies.push(new Body("mercury", 3.3011e23, 4.88e6, 5.791e10, 0, 'grey'));
+	bodies.push(new Body("venus", 4.8675e24, 1.21036e7, 1.0821e11,0, 'orange'));
 	bodies.push(new Body("earth", 5.972e24, 1.275627e7, 1.496e11, 0, 'blue'));
 	bodies.push(new Body("moon", 7.35e22, 3.5e6, 1.496e11, -8.8417e7, 'grey'));
 	bodies.push(new Body("mars", 6.4191e23, 6.79238e6, 2.2794e11, 0, 'red'));
@@ -119,10 +138,12 @@ function draw() {
 
 	background('black');
 
+	// display bodies
 	for (let body of bodies) {
 		camera.display(body);
 	}
 
+	// camera movement
 	if (kb.pressing('d')) { 
 		camVel = [camSpeed,0];
 	} 
@@ -139,17 +160,22 @@ function draw() {
 		camVel = [0,0];
 	}
 
+	camera.updatePos(camVel);
+
+	// alternate zoom to scroll wheel
 	if (kb.presses('+')) {
 		camera.alterZoom(1.1);
 	} else if (kb.presses('-')) {
 		camera.alterZoom(1/1.1);
 	}
 
+	// log camera details 
 	if (kb.presses('c')) {
 		console.log(camera.getPos());
 		console.log(camera.getZoom());
 	}
 
+	// pan to given body
 	if (kb.presses('p')) {
 		let p = prompt("enter body name:");
 		for (let body of bodies) {
@@ -158,8 +184,11 @@ function draw() {
 			}
 		}
 	}
-
-	camera.updatePos(camVel);
+	
+	if(kb.presses('r')) {
+		camera.setPos([0,0]);
+		camera.setZoom(1);
+	}
 }
 
 function mouseWheel(event) {
