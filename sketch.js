@@ -1,8 +1,9 @@
 // scale factor from real diameter of sun to 100 pixels
 const sf = 100 / 1.3914e9 
+
 // camera speed ~speed of light when camera isn't zoomed
-let camSpeed = 3e8;
 const defaultZoom = 7.5;
+let camSpeed = 3e8;
 let camVel = [0,0];
 
 let screenWidth = 0;
@@ -12,9 +13,10 @@ let enlargedMode = false;
 let enlargedModeScale = 30
 
 // TODO: 
-// ideal zoom attribute for when panning straight to body it fits frame nicely
+// 
 //
 // IDEAS: 
+// ideal zoom attribute for when panning straight to body it fits frame nicely
 // controllable rocket or spaceship, 'player', starts in low earth orbit
 // can accelerate in any direction, showing predicted path line, initially circular around earth
 // player is affected by gravity of all bodies which all start in orbit around the sun with their own predicted path line
@@ -128,6 +130,7 @@ function setup() {
 
 	camera = new Camera([0,0],7.5);
 	
+	//                    name, mass(kg), diameter(m),x,y,colour,enlargedMode diameter (suns)
 	bodies.push(new Body("sun", 1.9885e30, 1.3914e9, 0, 0, 'yellow', 1));
 	bodies.push(new Body("mercury", 3.3011e23, 4.88e6, 5.791e10, 0, 'grey', 0.1));
 	bodies.push(new Body("venus", 4.8675e24, 1.21036e7, 1.0821e11,0, 'orange', 0.2));
@@ -152,6 +155,12 @@ function draw() {
 
 	keyboardInput();
 	camera.updatePos(camVel);
+}
+
+function reset() {
+	camera.setPos([0,0]);
+	camera.setZoom(defaultZoom);
+	enlargedMode = false;
 }
 
 function mouseWheel(event) {
@@ -206,6 +215,7 @@ function keyboardInput() {
 	}
 
 	if (kb.presses('e')) {
+		//camera.alterZoom(enlargedMode ? 30 : 1/30);
 		enlargedMode = !enlargedMode;
 	}
 
@@ -221,7 +231,6 @@ function keyboardInput() {
 	
 	// reset
 	if(kb.presses('r')) {
-		camera.setPos([0,0]);
-		camera.setZoom(defaultZoom);
+		reset();
 	}
 }
