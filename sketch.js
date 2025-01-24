@@ -111,17 +111,12 @@ class Camera {
 }
 
 let bodies = [];
-let sun;
-let earth;
-let moon;
-let mars;
-let camera;
 
 function setup() {
 	new Canvas(windowWidth,windowHeight);
 	displayMode('centered');	
 
-	camera = new Camera([0,0],1);
+	camera = new Camera([0,0],7.5);
 	
 	bodies.push(new Body("sun", 1.9885e30, 1.3914e9, 0, 0, 'yellow'));
 	bodies.push(new Body("mercury", 3.3011e23, 4.88e6, 5.791e10, 0, 'grey'));
@@ -129,6 +124,7 @@ function setup() {
 	bodies.push(new Body("earth", 5.972e24, 1.275627e7, 1.496e11, 0, 'blue'));
 	bodies.push(new Body("moon", 7.35e22, 3.5e6, 1.496e11, -8.8417e7, 'grey'));
 	bodies.push(new Body("mars", 6.4191e23, 6.79238e6, 2.2794e11, 0, 'red'));
+	bodies.push(new Body("jupiter", 1.8982e27, 1.42984e8, 7.7841e11, 0, 'brown'));
 	
 }//1.275627e7
 
@@ -143,6 +139,31 @@ function draw() {
 		camera.display(body);
 	}
 
+	keyboardInput();
+	camera.updatePos(camVel);
+}
+
+function mouseWheel(event) {
+	if (event.delta > 0) { // down
+		camera.alterZoom(1/1.1);
+	} else { // up
+		camera.alterZoom(1.1);
+	}
+}
+
+function mousePressed() {
+	for (let body of bodies) {
+		
+		let bodyScreenCentre = camera.getAdjustedPos(body.getPos());
+		let bodyScreenRadius = 0.5 * camera.getAdjustedDiameter(body.getDiameter());
+
+		if (dist(mouseX, mouseY, bodyScreenCentre[0], bodyScreenCentre[1]) <= bodyScreenRadius) {
+			console.log(body.getName());
+		}
+	}
+}
+
+function keyboardInput() {
 	// camera movement
 	if (kb.pressing('d')) { 
 		camVel = [camSpeed,0];
@@ -159,8 +180,6 @@ function draw() {
 	else {
 		camVel = [0,0];
 	}
-
-	camera.updatePos(camVel);
 
 	// alternate zoom to scroll wheel
 	if (kb.presses('+')) {
@@ -185,28 +204,9 @@ function draw() {
 		}
 	}
 	
+	// reset
 	if(kb.presses('r')) {
 		camera.setPos([0,0]);
 		camera.setZoom(1);
-	}
-}
-
-function mouseWheel(event) {
-	if (event.delta > 0) { // down
-		camera.alterZoom(1/1.1);
-	} else { // up
-		camera.alterZoom(1.1);
-	}
-}
-
-function mousePressed() {
-	for (let body of bodies) {
-		
-		let bodyScreenCentre = camera.getAdjustedPos(body.getPos());
-		let bodyScreenRadius = 0.5 * camera.getAdjustedDiameter(body.getDiameter());
-
-		if (dist(mouseX, mouseY, bodyScreenCentre[0], bodyScreenCentre[1]) <= bodyScreenRadius) {
-			console.log(body.getName());
-		}
 	}
 }
