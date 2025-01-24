@@ -2,10 +2,14 @@
 const sf = 100 / 1.3914e9 
 // camera speed ~speed of light when camera isn't zoomed
 let camSpeed = 3e8;
+const defaultZoom = 7.5;
 let camVel = [0,0];
 
 let screenWidth = 0;
 let screenHeight = 0;
+
+let enlargedMode = false;
+let enlargedModeScale = 30
 
 // TODO: 
 // ideal zoom attribute for when panning straight to body it fits frame nicely
@@ -19,7 +23,6 @@ let screenHeight = 0;
 // can calculate acceleration due to resultant force on body
 // can calculate magnitude force on body due to gravity (classical) using formula, F = G(m1m2)/r^2
 // can calculate angle of force on body with trig then update force acting on body accordingly
-// ? toggle realistic & educational scale, default realistic, educational greatly increases size of planets
 
 class Body { 
 	#name;
@@ -27,13 +30,15 @@ class Body {
 	#diameter; //m
 	#pos; 
 	#color;
+	#enlargedModeSize; //suns, small bodies e.g. moons not displayed , = 0
 
-	constructor(name, mass, diameter, x, y, color) {
+	constructor(name, mass, diameter, x, y, color, enlargedModeSize) {
 		this.#name = name;
 		this.#mass = mass;
 		this.#diameter = diameter;
 		this.#pos = [x,y];
 		this.#color = color;
+		this.#enlargedModeSize = enlargedModeSize;
 	}
 
 	display() {
@@ -54,6 +59,9 @@ class Body {
 	}
 	getColor() {
 		return this.#color;
+	}
+	getEnlargedModeSize() {
+		return this.#enlargedModeSize;
 	}
 }
 
@@ -80,12 +88,15 @@ class Camera {
 		this.#pos[1] = pos[1];
 	}
 
-	getAdjustedPos(absolute_pos) {
-		return [((absolute_pos[0] - this.#pos[0]) * sf * this.#zoom) + (screenWidth/2), ((absolute_pos[1] - this.#pos[1]) * sf * this.#zoom) + (screenHeight/2)]
+	getAdjustedPos(body) {
+		return [((body.getPos()[0] - this.#pos[0]) * sf * this.#zoom) + (screenWidth/2), ((body.getPos()[1] - this.#pos[1]) * sf * this.#zoom) + (screenHeight/2)]
 	}
 
-	getAdjustedDiameter(absolute_diameter) {
-		return this.#zoom * sf * absolute_diameter
+	getAdjustedDiameter(body) {
+		if (enlargedMode) {
+			return this.#zoom * sf * 1.3914e9 * body.getEnlargedModeSize() * enlargedModeScale; 
+		}
+		return this.#zoom * sf * body.getDiameter();
 	}
 
 	getZoom() {
@@ -102,10 +113,9 @@ class Camera {
 		ellipseMode(CENTER);
 		fill(body.getColor());
 		noStroke();
-		
-		let absolute_pos = body.getPos();
-		let adjusted_pos = this.getAdjustedPos(absolute_pos);
-		let adjusted_diameter = this.getAdjustedDiameter(body.getDiameter());
+
+		let adjusted_pos = this.getAdjustedPos(body);
+		let adjusted_diameter = this.getAdjustedDiameter(body);
 		ellipse(adjusted_pos[0], adjusted_pos[1], adjusted_diameter);
 	}
 }
@@ -118,13 +128,14 @@ function setup() {
 
 	camera = new Camera([0,0],7.5);
 	
-	bodies.push(new Body("sun", 1.9885e30, 1.3914e9, 0, 0, 'yellow'));
-	bodies.push(new Body("mercury", 3.3011e23, 4.88e6, 5.791e10, 0, 'grey'));
-	bodies.push(new Body("venus", 4.8675e24, 1.21036e7, 1.0821e11,0, 'orange'));
-	bodies.push(new Body("earth", 5.972e24, 1.275627e7, 1.496e11, 0, 'blue'));
-	bodies.push(new Body("moon", 7.35e22, 3.5e6, 1.496e11, -8.8417e7, 'grey'));
-	bodies.push(new Body("mars", 6.4191e23, 6.79238e6, 2.2794e11, 0, 'red'));
-	bodies.push(new Body("jupiter", 1.8982e27, 1.42984e8, 7.7841e11, 0, 'brown'));
+	bodies.push(new Body("sun", 1.9885e30, 1.3914e9, 0, 0, 'yellow', 1));
+	bodies.push(new Body("mercury", 3.3011e23, 4.88e6, 5.791e10, 0, 'grey', 0.1));
+	bodies.push(new Body("venus", 4.8675e24, 1.21036e7, 1.0821e11,0, 'orange', 0.2));
+	bodies.push(new Body("earth", 5.972e24, 1.275627e7, 1.496e11, 0, 'blue', 0.3));
+	bodies.push(new Body("moon", 7.35e22, 3.5e6, 1.496e11, -8.8417e7, 'grey', 0));
+	bodies.push(new Body("mars", 6.4191e23, 6.79238e6, 2.2794e11, 0, 'red', 0.25));
+	bodies.push(new Body("jupiter", 1.8982e27, 1.42984e8, 7.7841e11, 0, 'brown', 0.7));
+	bodies.push(new Body("saturn", 5.6834e26, 5.8232e7, 1.43e12, 0, [250,229,191], 0.55));
 	
 }//1.275627e7
 
@@ -154,8 +165,8 @@ function mouseWheel(event) {
 function mousePressed() {
 	for (let body of bodies) {
 		
-		let bodyScreenCentre = camera.getAdjustedPos(body.getPos());
-		let bodyScreenRadius = 0.5 * camera.getAdjustedDiameter(body.getDiameter());
+		let bodyScreenCentre = camera.getAdjustedPos(body);
+		let bodyScreenRadius = 0.5 * camera.getAdjustedDiameter(body);
 
 		if (dist(mouseX, mouseY, bodyScreenCentre[0], bodyScreenCentre[1]) <= bodyScreenRadius) {
 			console.log(body.getName());
@@ -194,6 +205,10 @@ function keyboardInput() {
 		console.log(camera.getZoom());
 	}
 
+	if (kb.presses('e')) {
+		enlargedMode = !enlargedMode;
+	}
+
 	// pan to given body
 	if (kb.presses('p')) {
 		let p = prompt("enter body name:");
@@ -207,6 +222,6 @@ function keyboardInput() {
 	// reset
 	if(kb.presses('r')) {
 		camera.setPos([0,0]);
-		camera.setZoom(1);
+		camera.setZoom(defaultZoom);
 	}
 }
