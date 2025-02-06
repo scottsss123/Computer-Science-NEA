@@ -23,7 +23,7 @@ let bodies = [];
 //
 // IDEAS: 
 // player can accelerate in any direction
-// display bodies' paths of motion
+// display bodies' future paths of motion
 // button ui at top of canvas , or above canvas , for objectives and/or functions currently operated by keyboard
 //
 // "for a level physics students to visualise scale of solar system and learn orbital mechanics"
@@ -163,12 +163,16 @@ function setup() {
 	camera = new Camera([0,0],100);
 	
 	bodies.push(new Body("sun", 1.9885e30, 1.3914e9, [0, 0], [0,0], 'yellow'));
-	bodies.push(new Body("mercury", 3.3011e23, 4.88e6, [5.791e10, 0], [0,0], 'grey'));
-	bodies.push(new Body("venus", 4.8675e24, 1.21036e7, [1.0821e11,0], [0,0], 'orange'));
+	bodies.push(new Body("mercury", 3.3011e23, 4.88e6, [5.791e10, 0], [0,47.4e3], 'grey'));
+	bodies.push(new Body("venus", 4.8675e24, 1.21036e7, [1.0821e11,0], [0,35e3], 'orange'));
 	bodies.push(new Body("earth", 5.972e24, 1.275627e7, [1.496e11, 0], [0, 29.78e3], 'blue'));
 	bodies.push(new Body("moon", 7.35e22, 3.5e6, [1.496e11, 3.84e8], [1e3, 29.78e3], 'grey'));
-	bodies.push(new Body("mars", 6.4191e23, 6.79238e6, [2.2794e11, 0], [0,0], 'red'));
-	bodies.push(new Body("jupiter", 1.8982e27, 1.42984e8, [7.7841e11, 0], [0,0], 'brown'));
+	bodies.push(new Body("mars", 6.4191e23, 6.79238e6, [2.2794e11, 0], [0,24e3], 'red'));
+	bodies.push(new Body("phobos", 1.06e16, 11e3, [2.2794e11, 9.376e6], [2.1e3, 24e3], 'grey'));
+	bodies.push(new Body("jupiter", 1.8982e27, 1.42984e8, [7.7841e11, 0], [0,13.1e3], 'brown'));
+	bodies.push(new Body("saturn", 5.683e26, 1.1647e8, [1.43e12, 0], [0, 9.69e3], '#fae5bf'));
+	bodies.push(new Body("uranus", 8.6810e25, 5.0724e7, [2.87e12, 0], [0, 6.835e3], '#B2D6DB'));
+	bodies.push(new Body("neptune", 1.02409e26, 4.9244e7, [4.5e12, 0],[0, 5.43e3], '#7CB7BB'));
 	
 	bodies.push(new Body("player", 5700, 3.5e6,[ 1.275627e7 + 1.496e11 + 200e3, 0], [0, 29.78e3 + 5.5e3], 'green')); // 100 freyas of mass
 
@@ -198,7 +202,6 @@ function draw() {
 
 	
 }
-
 
 function updateVelocities() {
 	for (let i = 0; i < bodies.length; i++) {
@@ -253,20 +256,17 @@ function findBodyByName(name) {
 	return -1;
 }
 
-let n = 0;
 function mousePressed() {
 	for (let body of bodies) {
 		
-		let bodyScreenCentre = camera.getAdjustedPos(body);
-		let bodyScreenRadius = 0.5 * camera.getAdjustedDiameter(body);
+		let bodyScreenCentre = camera.getAdjustedPos(body.getPos());
+		let bodyScreenRadius = 0.5 * camera.getAdjustedDiameter(body.getDiameter());
 
 		if (dist(mouseX, mouseY, bodyScreenCentre[0], bodyScreenCentre[1]) <= bodyScreenRadius) {
 			console.log(body.getName());
 			console.log(body);
 		}
 	}
-	n++;
-	console.log("framecount log " + n + ": " + frameCount);
 }
 
 function keyboardInput() {
