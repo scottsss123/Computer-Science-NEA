@@ -115,15 +115,12 @@ class Camera {
 		this.#pos[1] = pos[1];
 	}
 
-	getAdjustedPos(body) {
-		return [((body.getPos()[0] - this.#pos[0]) * sf * this.#zoom) + (screenWidth/2), ((body.getPos()[1] - this.#pos[1]) * sf * this.#zoom) + (screenHeight/2)]
+	getAdjustedPos(absolute_pos) {
+		return [((absolute_pos[0] - this.#pos[0]) * sf * this.#zoom) + (screenWidth/2), ((absolute_pos[1] - this.#pos[1]) * sf * this.#zoom) + (screenHeight/2)]
 	}
 
-	getAdjustedDiameter(body) {
-		if (enlargedMode) {
-			return this.#zoom * sf * 1.3914e9 * body.getEnlargedModeSize() * enlargedModeScale; 
-		}
-		return this.#zoom * sf * body.getDiameter();
+	getAdjustedDiameter(absolute_diameter) {
+		return this.#zoom * sf * absolute_diameter;
 	}
 
 	getZoom() {
@@ -152,17 +149,6 @@ class Camera {
 		} else {
 			ellipse(adjusted_pos[0], adjusted_pos[1], adjusted_diameter);
 		}
-	}
-
-	displayPlayer() {
-		imageMode(CENTER);
-	
-		
-		let absolute_pos = findBodyByName('player').getPos();
-		let adjusted_pos = this.getAdjustedPos(absolute_pos);
-		//console.log("img: ",adjusted_pos);
-		let adjusted_diameter = this.getAdjustedDiameter(findBodyByName('player').getDiameter());
-		image(playerImg, adjusted_pos[0], adjusted_pos[1], adjusted_diameter,adjusted_diameter); // :(
 	}
 }
 
