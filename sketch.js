@@ -33,6 +33,7 @@ let bodies = [];
 class Body { 
 	#name;
 	#mass; //kg
+	#baseDiameter;
 	#diameter; //m
 	#pos; 
 	#color;
@@ -41,6 +42,7 @@ class Body {
 	constructor(name, mass, diameter, inPos, inVel, color) {
 		this.#name = name;
 		this.#mass = mass;
+		this.#baseDiameter = diameter;
 		this.#diameter = diameter;
 		this.#pos = inPos;
 		this.#color = color;
@@ -90,6 +92,9 @@ class Body {
 	// other
 	scaleSize(f) {
 		this.#diameter *= f;
+	}
+	setScale(s) {
+		this.#diameter = s * this.#baseDiameter;
 	}
 }
 
@@ -178,7 +183,7 @@ function setup() {
 	bodies.push(new Body("player", 5700, 3.5e6,[ 1.275627e7 + 1.496e11 + 200e3, 0], [0, 29.78e3 + 5.5e3], 'green')); // 100 freyas of mass
 
 
-	console.log("press:\nf: follow planet (type planet name into prompt)\np: pan to planet\nw,a,s,d: move camera if not following planet (will update this)\nscroll: zoom in/out\nc: log camera data\nt: adjust time rate\nclick on body: log body data")
+	console.log("press:\nf: follow planet (type planet name into prompt)\np: pan to planet\nw,a,s,d: move camera if not following planet (will update this)\nscroll: zoom in/out\nc: log camera data\nt: adjust time rate\nclick on body: log body data\nl: enlarge bodies, recommended enlargements scale = 50")
 }//1.275627e7
 
 function draw() {
@@ -331,5 +336,12 @@ function keyboardInput() {
 	if (kb.presses('t')) {
 		let t = prompt("enter fast forward speed ('1' -> 1/60 seconds per frame -> real time, '3600' -> 3600/60 seconds per fram -> 1 hour per second)");
 		timeRate = BASETIMERATE * Number(t);
+	}
+
+	if (kb.presses('l')) {
+		let s = prompt("enter body scale");
+		for (let body of bodies) {
+			body.setScale(Number(s));
+		}
 	}
 }
