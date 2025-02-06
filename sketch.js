@@ -122,7 +122,7 @@ class Camera {
 	}
 
 	getAdjustedPos(absolute_pos) {
-		return [((absolute_pos[0] - this.#pos[0]) * sf * this.#zoom) + (screenWidth/2), ((absolute_pos[1] - this.#pos[1]) * sf * this.#zoom) + (screenHeight/2)]
+		return [((absolute_pos[0] - this.#pos[0] - (followingOffset[0] / this.#zoom)) * sf * this.#zoom) + (screenWidth/2), ((absolute_pos[1] - this.#pos[1] - (followingOffset[1] / this.#zoom)) * sf * this.#zoom) + (screenHeight/2)]
 	}
 
 	getAdjustedDiameter(absolute_diameter) {
@@ -279,20 +279,27 @@ function mousePressed() {
 
 function keyboardInput() {
 	// camera movement
+	let posChange = [0,0];
 	if (kb.pressing('d')) { 
-		camVel = [camSpeed,0];
+		posChange = [camSpeed,0];
 	} 
 	else if (kb.pressing('a')) {
-		camVel = [-camSpeed,0];
+		posChange = [-camSpeed,0];
 	}
 	else if (kb.pressing('w')) {
-		camVel = [0,-camSpeed];
+		posChange = [0,-camSpeed];
 	}
 	else if (kb.pressing('s')) {
-		camVel = [0,camSpeed];
+		posChange = [0,camSpeed];
 	}
 	else {
-		camVel = [0,0];
+		posChange = [0,0];
+	}
+	if (following) {
+		followingOffset[0] += posChange[0]; // different logic is ugly but works
+		followingOffset[1] += posChange[1];
+	} else {
+		camVel = followingOffset;
 	}
 
 	// alternate zoom to scroll wheel
@@ -310,6 +317,7 @@ function keyboardInput() {
 
 	// pan to given body
 	if (kb.presses('p')) {
+		followingOffset = [0,0];
 		following = "";
 		let p = prompt("enter body name:");
 		for (let body of bodies) {
@@ -320,6 +328,7 @@ function keyboardInput() {
 	}
 
 	if (kb.presses('f')) {
+		followingOffset = [0,0];
 		let i = prompt("type body to follow");
 		if (i === "") {
 			following = "";
