@@ -13,6 +13,7 @@ let screenWidth = 0;
 let screenHeight = 0;
 
 let following = "player"; 
+let followingOffset = [0,0]; // implement this
 let player;
 let playerImg;
 
@@ -176,6 +177,8 @@ function setup() {
 	
 	bodies.push(new Body("player", 5700, 3.5e6,[ 1.275627e7 + 1.496e11 + 200e3, 0], [0, 29.78e3 + 5.5e3], 'green')); // 100 freyas of mass
 
+
+	console.log("press:\nf: follow planet (type planet name into prompt)\np: pan to planet\nw,a,s,d: move camera if not following planet (will update this)\nscroll: zoom in/out\nc: log camera data\nt: adjust time rate\nclick on body: log body data")
 }//1.275627e7
 
 function draw() {
@@ -300,11 +303,6 @@ function keyboardInput() {
 		console.log(camera.getZoom());
 	}
 
-	if (kb.presses('e')) {
-		//camera.alterZoom(enlargedMode ? 30 : 1/30);
-		enlargedMode = !enlargedMode;
-	}
-
 	// pan to given body
 	if (kb.presses('p')) {
 		following = "";
@@ -333,10 +331,5 @@ function keyboardInput() {
 	if (kb.presses('t')) {
 		let t = prompt("enter fast forward speed ('1' -> 1/60 seconds per frame -> real time, '3600' -> 3600/60 seconds per fram -> 1 hour per second)");
 		timeRate = BASETIMERATE * Number(t);
-	}
-	
-	// reset
-	if(kb.presses('r')) {
-		reset();
 	}
 }
