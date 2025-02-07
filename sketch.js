@@ -12,7 +12,7 @@ let timeRate = 3600 * BASETIMERATE;
 let screenWidth = 0;
 let screenHeight = 0;
 
-let following = "player"; 
+let following = "earth"; 
 let followingOffset = [0,0]; // implement this
 let player;
 let playerImg;
@@ -92,11 +92,16 @@ class Body {
 	setScale(s) {
 		this.#diameter = s * this.#baseDiameter;
 	}
-	getProgradeUnitVec() {
-		let modV = Math.sqrt(((this.#vel[0])**2) + ((this.#vel[1])**2));
-		let out = [0,0];
-		out[0] = this.#vel[0] / modV;
-		out[1] = this.#vel[1] / modV;
+	getProgradeUnitVec(body) { //returns unit vector in prograde direction relative to body parameter
+		let bV = body.getVel();
+		let v = [this.#vel[0]- bV[0], this.#vel[1] - bV[1]];
+		let out = calculateUnitVec(v);
+		return out;
+	}
+	getNormalUnitVec(body) {
+		let bP = body.getPos();
+		let v = [this.#pos[0] - bP[0], this.#pos[1] - bP[1]];
+		let out = calculateUnitVec(v);
 		return out;
 	}
 }
@@ -189,9 +194,9 @@ function setup() {
 	bodies.push(new Body("uranus", 8.6810e25, 5.0724e7, [2.87e12, 0], [0, 6.835e3], '#B2D6DB'));
 	bodies.push(new Body("neptune", 1.02409e26, 4.9244e7, [4.5e12, 0],[0, 5.43e3], '#7CB7BB'));
 	
-	bodies.push(new Player("player", 5700, 3.5e6,[ 1.275627e7 + 1.496e11 + 200e3, 0], [0, 29.78e3 + 5.5e3], 'green')); // 100 freyas of mass
+	bodies.push(new Player("player", 5700, 3.5e6,[ 1.275627e7 + 1.496e11 + 200e3, 0], [0, 29.78e3 - 5.5e3], 'green')); // 100 freyas of mass
 
-
+	background('black');
 	console.log("press:\nf: follow planet (type planet name into prompt)\np: pan to planet\nw,a,s,d: move camera if not following planet (will update this)\nscroll: zoom in/out\nc: log camera data\nt: adjust time rate\nclick on body: log body data\nl: enlarge bodies, recommended enlargements scale = 50")
 }//1.275627e7
 
@@ -201,15 +206,15 @@ function draw() {
 
 	G = GCONST * timeRate;
 
-	background('black');
+	//background('black');
 
 	// display bodies
+	displayBodyPath(findBodyByName('player')); // yikes
+
 	for (let body of bodies) {
 		camera.display(body);
 		body.updatePos();
 	}
-
-	displayBodyPath(findbodyByName('player')); // yikes
 
 	updateVelocities();
 
@@ -277,7 +282,17 @@ function findBodyByName(name) {
 	return -1;
 }
 
+function calculateUnitVec(v) {
+	let modV = Math.sqrt(((v[0])**2) + ((v[1])**2));
+	let out = [0,0];
+	out[0] = v[0] / modV;
+	out[1] = v[1] / modV;
+	return out;
+	
+}
+
 function mousePressed() {
+	background('black');
 	for (let body of bodies) {
 		
 		let bodyScreenCentre = camera.getAdjustedPos(body.getPos());
@@ -290,6 +305,7 @@ function mousePressed() {
 	}
 }
 
+let focus = 'earth'
 function keyboardInput() {
 	// camera movement
 	let posChange = [0,0];
@@ -315,19 +331,25 @@ function keyboardInput() {
 		camVel = posChange;
 	}
 
+	if (kb.presses('o')) {
+		let f = prompt("enter focus body, accelerate in orbit relative to focus");
+		focus = f;
+	}
+
 	// possibly change this to prograde, retrograde, normal, antinormal when orbit lines are showing
-	let progradeDirVec = findBodyByName('player').getProgradeUnitVec();
+	let progradeDirVec = findBodyByName('player').getProgradeUnitVec(findBodyByName(focus));
+	let normalDirVec = findBodyByName('player').getNormalUnitVec(findBodyByName(focus));
 	if (kb.pressing('up')) { 
-		findBodyByName('player').addVel([0, playerAccelerationScalar]);
+		findBodyByName('player').addVel(scalarMultiplyVec2d(progradeDirVec, playerAccelerationScalar));
 	} 
 	if (kb.pressing('down')) {
-		findBodyByName('player').addVel([0, -playerAccelerationScalar]);
-	}
-	if (kb.pressing('left')) {
-		findBodyByName('player').addVel([-playerAccelerationScalar, 0]);
+		findBodyByName('player').addVel(scalarMultiplyVec2d([-1 * progradeDirVec[0], -1 * progradeDirVec[1]], playerAccelerationScalar));
 	}
 	if (kb.pressing('right')) {
-		findBodyByName('player').addVel([playerAccelerationScalar, 0]);
+		findBodyByName('player').addVel(scalarMultiplyVec2d(normalDirVec, playerAccelerationScalar));
+	}
+	if (kb.pressing('left')) {
+		findBodyByName('player').addVel(scalarMultiplyVec2d([-1 * normalDirVec[0],-1 * normalDirVec[1]], playerAccelerationScalar));
 	}
 
 	// alternate zoom to scroll wheel
@@ -344,16 +366,16 @@ function keyboardInput() {
 	}
 
 	// pan to given body
-	if (kb.presses('p')) {
-		followingOffset = [0,0];
-		following = "";
-		let p = prompt("enter body name:");
-		for (let body of bodies) {
-			if (body.getName() === p) {
-				camera.setPos(body.getPos());
-			}
-		}
-	}
+	//if (kb.presses('p')) {
+	//	followingOffset = [0,0];
+	//	following = "";
+	//	let p = prompt("enter body name:");
+	//	for (let body of bodies) {
+	//		if (body.getName() === p) {
+	//			camera.setPos(body.getPos());
+	//		}
+	//	}
+	//}
 
 	if (kb.presses('f')) {
 		followingOffset = [0,0];
@@ -368,6 +390,11 @@ function keyboardInput() {
 				return;
 			}
 		}
+	}
+
+	if (kb.presses('p')) {
+		let p = prompt('enter player acceleration speed (g)')
+		playerAccelerationScalar = Number(p) * basePlayerAccelerationScalar;
 	}
 
 	if (kb.presses('t')) {
@@ -387,6 +414,9 @@ function scalarMultiplyVec2d(vec, scalar) {
 	return [vec[0] * scalar, vec[1] * scalar];
 }
 
+let depth = 100;
+
 function displayBodyPath(body) {
-	// implement this 💀
+	let curPos = body.getPos();
+
 }
