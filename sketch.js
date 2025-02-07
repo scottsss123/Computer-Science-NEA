@@ -16,11 +16,13 @@ let following = "player";
 let followingOffset = [0,0]; // implement this
 let player;
 let playerImg;
+const basePlayerAccelerationScalar = 9.80665; // 1g of acceleration
+let playerAccelerationScalar = basePlayerAccelerationScalar;
 
 let bodies = [];
 
 // TODO: 
-// 
+// (maybe) fix player flying out of orbit at fast timeRate 
 //
 // IDEAS: 
 // player can accelerate in any direction
@@ -47,12 +49,6 @@ class Body {
 		this.#pos = inPos;
 		this.#color = color;
 		this.#vel = inVel;
-	}
-
-	display() {
-		ellipseMode(CENTER);
-		fill(this.#color);
-		ellipse(this.#pos[0], this.#pos[1], this.#diameter * sf);
 	}
 
 	updatePos() {
@@ -95,6 +91,19 @@ class Body {
 	}
 	setScale(s) {
 		this.#diameter = s * this.#baseDiameter;
+	}
+	getProgradeUnitVec() {
+		let modV = Math.sqrt(((this.#vel[0])**2) + ((this.#vel[1])**2));
+		let out = [0,0];
+		out[0] = this.#vel[0] / modV;
+		out[1] = this.#vel[1] / modV;
+		return out;
+	}
+}
+
+class Player extends Body {
+	constructor(name, mass, diameter, inPos, inVel, color) {
+		super(name, mass, diameter, inPos, inVel, color);
 	}
 }
 
@@ -180,7 +189,7 @@ function setup() {
 	bodies.push(new Body("uranus", 8.6810e25, 5.0724e7, [2.87e12, 0], [0, 6.835e3], '#B2D6DB'));
 	bodies.push(new Body("neptune", 1.02409e26, 4.9244e7, [4.5e12, 0],[0, 5.43e3], '#7CB7BB'));
 	
-	bodies.push(new Body("player", 5700, 3.5e6,[ 1.275627e7 + 1.496e11 + 200e3, 0], [0, 29.78e3 + 5.5e3], 'green')); // 100 freyas of mass
+	bodies.push(new Player("player", 5700, 3.5e6,[ 1.275627e7 + 1.496e11 + 200e3, 0], [0, 29.78e3 + 5.5e3], 'green')); // 100 freyas of mass
 
 
 	console.log("press:\nf: follow planet (type planet name into prompt)\np: pan to planet\nw,a,s,d: move camera if not following planet (will update this)\nscroll: zoom in/out\nc: log camera data\nt: adjust time rate\nclick on body: log body data\nl: enlarge bodies, recommended enlargements scale = 50")
@@ -200,12 +209,16 @@ function draw() {
 		body.updatePos();
 	}
 
+	displayBodyPath(findbodyByName('player')); // yikes
+
 	updateVelocities();
 
 	keyboardInput();
-	camera.updatePos(camVel);
+	
 	if (following !== "") {
 		camera.setPos(findBodyByName(following).getPos());
+	} else {
+		camera.updatePos(camVel);
 	}
 
 	
@@ -238,7 +251,7 @@ function updateVelocities() {
 	}
 }
 
-function mouseWheel(event) { // todo: if holding control, scale player size & not alter zoom
+function mouseWheel(event) { 
 	if (event.delta > 0) { // down
 		if (kb.pressing('shift')) {
 			findBodyByName('player').scaleSize(1.1);
@@ -295,11 +308,26 @@ function keyboardInput() {
 	else {
 		posChange = [0,0];
 	}
-	if (following) {
+	if (following !== "") {
 		followingOffset[0] += posChange[0]; // different logic is ugly but works
 		followingOffset[1] += posChange[1];
 	} else {
-		camVel = followingOffset;
+		camVel = posChange;
+	}
+
+	// possibly change this to prograde, retrograde, normal, antinormal when orbit lines are showing
+	let progradeDirVec = findBodyByName('player').getProgradeUnitVec();
+	if (kb.pressing('up')) { 
+		findBodyByName('player').addVel([0, playerAccelerationScalar]);
+	} 
+	if (kb.pressing('down')) {
+		findBodyByName('player').addVel([0, -playerAccelerationScalar]);
+	}
+	if (kb.pressing('left')) {
+		findBodyByName('player').addVel([-playerAccelerationScalar, 0]);
+	}
+	if (kb.pressing('right')) {
+		findBodyByName('player').addVel([playerAccelerationScalar, 0]);
 	}
 
 	// alternate zoom to scroll wheel
@@ -353,4 +381,12 @@ function keyboardInput() {
 			body.setScale(Number(s));
 		}
 	}
+}
+
+function scalarMultiplyVec2d(vec, scalar) {
+	return [vec[0] * scalar, vec[1] * scalar];
+}
+
+function displayBodyPath(body) {
+	// implement this 💀
 }
