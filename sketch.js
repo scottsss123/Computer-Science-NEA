@@ -18,6 +18,7 @@ let player;
 let playerImg;
 const basePlayerAccelerationScalar = 9.80665; // 1g of acceleration
 let playerAccelerationScalar = basePlayerAccelerationScalar;
+let toggleBackground = true;
 
 let bodies = [];
 
@@ -197,7 +198,7 @@ function setup() {
 	bodies.push(new Player("player", 5700, 3.5e6,[ 1.275627e7 + 1.496e11 + 200e3, 0], [0, 29.78e3 - 5.5e3], 'green')); // 100 freyas of mass
 
 	background('black');
-	console.log("press:\nf: follow planet (type planet name into prompt)\np: pan to planet\nw,a,s,d: move camera if not following planet (will update this)\nscroll: zoom in/out\nc: log camera data\nt: adjust time rate\nclick on body: log body data\nl: enlarge bodies, recommended enlargements scale = 50")
+	console.log("press:\nf: follow planet (type planet name into prompt)\np: pan to planet\nw,a,s,d: move camera if not following planet (will update this)\nscroll: zoom in/out\nc: log camera data\nt: adjust time rate\nclick on body: log body data\nl: enlarge bodies, recommended enlargements scale = 50\narrow keys:accelerate player relative to orbit around focused planet\np:acceleration scalar\nb: toggle draw backgrround")
 }//1.275627e7
 
 function draw() {
@@ -206,7 +207,7 @@ function draw() {
 
 	G = GCONST * timeRate;
 
-	//background('black');
+	if (toggleBackground) background('black');
 
 	// display bodies
 	displayBodyPath(findBodyByName('player')); // yikes
@@ -363,6 +364,10 @@ function keyboardInput() {
 	if (kb.presses('c')) {
 		console.log(camera.getPos());
 		console.log(camera.getZoom());
+	}
+
+	if (kb.presses('b')) {
+		toggleBackground = toggleBackground ? false : true;
 	}
 
 	// pan to given body
