@@ -21,6 +21,7 @@ let playerAccelerationScalar = basePlayerAccelerationScalar;
 let toggleBackground = true;
 
 let bodies = [];
+let tBodies = [];
 
 // TODO: 
 // (maybe) fix player flying out of orbit at fast timeRate 
@@ -92,6 +93,10 @@ class Body {
 	}
 	setScale(s) {
 		this.#diameter = s * this.#baseDiameter;
+	}
+	setPos(p) {
+		this.#pos[0] = p[0];
+		this.#pos[1] = p[1];
 	}
 	getProgradeUnitVec(body) { //returns unit vector in prograde direction relative to body parameter
 		let bV = body.getVel();
@@ -171,6 +176,14 @@ class Camera {
 			ellipse(adjusted_pos[0], adjusted_pos[1], adjusted_diameter);
 		}
 	}
+
+	lineAB(posA, posB) {
+		stroke('yellow');
+		strokeWeight(1);
+		let adjustedPosA = this.getAdjustedPos(posA);
+		let adjustedPosB = this.getAdjustedPos(posB);
+		line(adjustedPosA[0], adjustedPosA[1], adjustedPosB[0], adjustedPosB[1]);
+	}
 }
 
 function preload() {
@@ -183,19 +196,23 @@ function setup() {
 
 	camera = new Camera([0,0],100);
 	
-	bodies.push(new Body("sun", 1.9885e30, 1.3914e9, [0, 0], [0,0], 'yellow'));
-	bodies.push(new Body("mercury", 3.3011e23, 4.88e6, [5.791e10, 0], [0,47.4e3], 'grey'));
-	bodies.push(new Body("venus", 4.8675e24, 1.21036e7, [1.0821e11,0], [0,35e3], 'orange'));
+	//bodies.push(new Body("sun", 1.9885e30, 1.3914e9, [0, 0], [0,0], 'yellow'));
+	//bodies.push(new Body("mercury", 3.3011e23, 4.88e6, [5.791e10, 0], [0,47.4e3], 'grey'));
+	//bodies.push(new Body("venus", 4.8675e24, 1.21036e7, [1.0821e11,0], [0,35e3], 'orange'));
 	bodies.push(new Body("earth", 5.972e24, 1.275627e7, [1.496e11, 0], [0, 29.78e3], 'blue'));
 	bodies.push(new Body("moon", 7.35e22, 3.5e6, [1.496e11, 3.84e8], [1e3, 29.78e3], 'grey'));
-	bodies.push(new Body("mars", 6.4191e23, 6.79238e6, [2.2794e11, 0], [0,24e3], 'red'));
-	bodies.push(new Body("phobos", 1.06e16, 11e3, [2.2794e11, 9.376e6], [2.1e3, 24e3], 'grey'));
-	bodies.push(new Body("jupiter", 1.8982e27, 1.42984e8, [7.7841e11, 0], [0,13.1e3], 'brown'));
-	bodies.push(new Body("saturn", 5.683e26, 1.1647e8, [1.43e12, 0], [0, 9.69e3], '#fae5bf'));
-	bodies.push(new Body("uranus", 8.6810e25, 5.0724e7, [2.87e12, 0], [0, 6.835e3], '#B2D6DB'));
-	bodies.push(new Body("neptune", 1.02409e26, 4.9244e7, [4.5e12, 0],[0, 5.43e3], '#7CB7BB'));
+	//bodies.push(new Body("mars", 6.4191e23, 6.79238e6, [2.2794e11, 0], [0,24e3], 'red'));
+	//bodies.push(new Body("phobos", 1.06e16, 11e3, [2.2794e11, 9.376e6], [2.1e3, 24e3], 'grey'));
+	//bodies.push(new Body("jupiter", 1.8982e27, 1.42984e8, [7.7841e11, 0], [0,13.1e3], 'brown'));
+	//bodies.push(new Body("saturn", 5.683e26, 1.1647e8, [1.43e12, 0], [0, 9.69e3], '#fae5bf'));
+	//bodies.push(new Body("uranus", 8.6810e25, 5.0724e7, [2.87e12, 0], [0, 6.835e3], '#B2D6DB'));
+	//bodies.push(new Body("neptune", 1.02409e26, 4.9244e7, [4.5e12, 0],[0, 5.43e3], '#7CB7BB'));
 	
 	bodies.push(new Player("player", 5700, 3.5e6,[ 1.275627e7 + 1.496e11 + 200e3, 0], [0, 29.78e3 - 5.5e3], 'green')); // 100 freyas of mass
+
+	for (let b of bodies) {
+		tBodies.push(new Body(b.getName(), b.getMass(), 1e7, b.getPos(), b.getVel(), 'green'));
+	}
 
 	background('black');
 	console.log("press:\nf: follow planet (type planet name into prompt)\np: pan to planet\nw,a,s,d: move camera if not following planet (will update this)\nscroll: zoom in/out\nc: log camera data\nt: adjust time rate\nclick on body: log body data\nl: enlarge bodies, recommended enlargements scale = 50\narrow keys:accelerate player relative to orbit around focused planet\np:acceleration scalar\nb: toggle draw backgrround")
@@ -209,15 +226,17 @@ function draw() {
 
 	if (toggleBackground) background('black');
 
-	// display bodies
-	displayBodyPath(findBodyByName('player')); // yikes
-
-	for (let body of bodies) {
-		camera.display(body);
-		body.updatePos();
+	for (let i = 0; i < bodies.length; i++) {
+		camera.display(bodies[i]);
+		camera.display(tBodies[i]);
+		bodies[i].updatePos();
+		tBodies[i].updatePos();
 	}
 
-	updateVelocities();
+	updateVelocities(bodies);
+	for (let i = 0; i < bodies.length; i++) {
+		tBodies[i].setVel(bodies[i].getVel());
+	}
 
 	keyboardInput();
 	
@@ -227,19 +246,21 @@ function draw() {
 		camera.updatePos(camVel);
 	}
 
-	
+	// display bodies
+	displayBodyPath(tFindBodyByName('earth')); // yikes
+	//camera.lineAB(findBodyByName('earth').getPos(), findBodyByName('player').getPos());
 }
 
-function updateVelocities() {
-	for (let i = 0; i < bodies.length; i++) {
-		for (let j = i + 1; j < bodies.length; j++) {
+function updateVelocities(bodyArr) {
+	for (let i = 0; i < bodyArr.length; i++) {
+		for (let j = i + 1; j < bodyArr.length; j++) {
 			// can be largely optimised
 
-			let pos1 = bodies[i].getPos();
-			let pos2 = bodies[j].getPos();
+			let pos1 = bodyArr[i].getPos();
+			let pos2 = bodyArr[j].getPos();
 
 			// f force (N) between body 1 and 2
-			let f = G * ((bodies[i].getMass() * bodies[j].getMass()) / (dist(pos1[0],pos1[1],pos2[0],pos2[1]) ** 2));
+			let f = G * ((bodyArr[i].getMass() * bodyArr[j].getMass()) / (dist(pos1[0],pos1[1],pos2[0],pos2[1]) ** 2));
 			// d = unit vector in direction of body 1 (i)
 			
 			let d = [pos2[0] - pos1[0], pos2[1] - pos1[1]];
@@ -249,10 +270,10 @@ function updateVelocities() {
 
 			let forceVec = [d[0] * f, d[1] * f];
 			
-			let accelerationVec = [forceVec[0] / bodies[i].getMass(), forceVec[1] / bodies[i].getMass()];
-			let otherBodyAcceleration = [-1 * (forceVec[0] / bodies[j].getMass()), -1 * (forceVec[1] / bodies[j].getMass())];			
-			bodies[i].addVel(accelerationVec);
-			bodies[j].addVel(otherBodyAcceleration);
+			let accelerationVec = [forceVec[0] / bodyArr[i].getMass(), forceVec[1] / bodyArr[i].getMass()];
+			let otherBodyAcceleration = [-1 * (forceVec[0] / bodyArr[j].getMass()), -1 * (forceVec[1] / bodyArr[j].getMass())];			
+			bodyArr[i].addVel(accelerationVec);
+			bodyArr[j].addVel(otherBodyAcceleration);
 		}
 	}
 }
@@ -275,6 +296,16 @@ function mouseWheel(event) {
 
 function findBodyByName(name) {
 	for (let body of bodies) {
+		if (body.getName() === name) {
+			return body;
+		}
+	}
+	console.log("invalid body name");
+	return -1;
+}
+
+function tFindBodyByName(name) { // this is bad
+	for (let body of tBodies) {
 		if (body.getName() === name) {
 			return body;
 		}
@@ -419,9 +450,8 @@ function scalarMultiplyVec2d(vec, scalar) {
 	return [vec[0] * scalar, vec[1] * scalar];
 }
 
-let depth = 100;
-
+let depth = 10;
 function displayBodyPath(body) {
-	let curPos = body.getPos();
-
+	
+	
 }
